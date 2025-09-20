@@ -10,6 +10,21 @@ export const login = async (req, res) => {
     errors.push({ field: "password", message: "Password is required" });
 
   if (errors.length > 0) return res.status(400).json(errors);
+
+  const isUserExist = await ifEmailExists(email);
+
+  if (!isUserExist)
+    return res.status(400).json({ message: "Email not registered" });
+
+  const isPasswordCorrect = await bcrypt.compare(
+    password,
+    isUserExist.password
+  );
+  console.log(isPasswordCorrect);
+  if (!isPasswordCorrect)
+    return res.status(400).json({ message: "Incorrect password" });
+
+  return res.status(200).json({ user: isUserExist });
 };
 
 export const register = async (req, res) => {
