@@ -1,3 +1,4 @@
+import { generateToken } from "../helpers/generatetoken.js";
 import { createUser, ifEmailExists } from "../models/usermodel.js";
 import bcrypt from "bcryptjs";
 
@@ -23,6 +24,14 @@ export const login = async (req, res) => {
   console.log(isPasswordCorrect);
   if (!isPasswordCorrect)
     return res.status(400).json({ message: "Incorrect password" });
+
+  const token = await generateToken(isUserExist);
+
+  res.cookie("token", token, {
+    httpOnly: true,
+    secure: false,
+    sameSite: "lax",
+  });
 
   return res.status(200).json({ user: isUserExist });
 };

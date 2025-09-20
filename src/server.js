@@ -1,16 +1,18 @@
 import express from "express";
 import cors from "cors";
+import cookieParser from "cookie-parser";
 
 import routes from "./routes/authroutes.js";
 import { createUsersTable } from "./models/usermodel.js";
 
 const app = express();
 app.use(cors());
+app.use(cookieParser());
 app.use(express.json());
 app.use(routes);
 
 app.get("/", (req, res) => {
-  console.log(`first`);
+  console.log(req.cookies);
 });
 
 const PORT = 5000;
