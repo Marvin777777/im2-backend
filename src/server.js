@@ -9,6 +9,10 @@ app.use(cors());
 app.use(express.json());
 app.use(routes);
 
+app.get("/", (req, res) => {
+  console.log(`first`);
+});
+
 const PORT = 5000;
 app.listen(PORT, () => {
   createUsersTable();
