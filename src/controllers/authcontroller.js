@@ -1,5 +1,5 @@
 import { generateToken } from "../helpers/generatetoken.js";
-import { createUser, ifEmailExists } from "../models/usermodel.js";
+import { createUser, ifEmailExists, updatePassword } from "../models/usermodel.js";
 import bcrypt from "bcryptjs";
 
 export const login = async (req, res) => {
@@ -75,7 +75,22 @@ export const register = async (req, res) => {
   });
 };
 
-export const changepassword = async (req, res) => {};
+export const changepassword = async (req, res) => {
+  const { old_password, new_password, user_id } = req.body;
+  let errors = [];
+
+  if (!old_password)
+    errors.push({ path: "old_password", message: "Old password is required" });
+  if (!new_password)
+    errors.push({ path: "new_password", message: "New password is required" });
+
+  if (errors.length > 0) return res.status(400).json(errors);
+
+
+  const update = await updatePassword(old_password, new_password, user_id);
+
+
+};
 
 export const logout = async (req, res) => {
   res.clearCookie("token");

@@ -49,3 +49,7 @@ export const ifEmailExists = async (email) => {
 
   return user[0];
 };
+
+export const updatePassword = async (old_password, new_password, user_id) => {
+
+}
