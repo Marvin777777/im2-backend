@@ -77,4 +77,8 @@ export const register = async (req, res) => {
 
 export const changepassword = async (req, res) => {};
 
-export const logout = async (req, res) => {};
+export const logout = async (req, res) => {
+  res.clearCookie("token");
+
+  return res.json({ message: "logout success" });
+};
