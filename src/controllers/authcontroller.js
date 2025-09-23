@@ -94,27 +94,48 @@ export const changepassword = async (req, res) => {
 
   if (errors.length > 0) return res.status(400).json(errors);
 
-  const [user] = await dbConn.query("SELECT * FROM users WHERE id = ?", [
-    req.user.id,
-  ]);
+  try {
+    const [rows] = await dbConn.query("SELECT * FROM users WHERE id = ?", [
+      req.user.id,
+    ]);
+    const user = rows[0]; // ✅ fix: query returns array
 
-  const isPasswordMatch = await bcrypt.compare(old_password, user.password);
+    const isPasswordMatch = await bcrypt.compare(old_password, user.password);
 
-  if (!isPasswordMatch)
-    return res
-      .status(400)
-      .json({ path: "old_password", message: "Password do not match" });
+    if (!isPasswordMatch)
+      return res
+        .status(400)
+        .json({ path: "old_password", message: "Password do not match" });
 
-  console.log(isPasswordMatch);
+    // 🔑 Hash new password
+    const salt = await bcrypt.genSalt(10);
+    const hashedNewPassword = await bcrypt.hash(new_password, salt);
 
-  const update = await updatePassword(new_password, req.user.id);
+    const update = await updatePassword(hashedNewPassword, req.user.id);
 
-  console.log(`inside chng`, update);
+    if (update.affectedRows !== 1)
+      return res.status(400).json({ message: "Failed to change password" });
 
-  if (update.affectedRows !== 1)
-    return res.status(400).json({ message: "Failed to changepass" });
+    // 🔑 Get updated user
+    const updatedUser = await getUserById(req.user.id);
 
-  return res.status(200).json({ message: "Changepassword success" });
+    // 🔑 Create new JWT
+    const token = jwt.sign({ user: updatedUser }, "secret-key", {
+      expiresIn: "1h",
+    });
+
+    // 🔑 Send fresh token
+    res.cookie("token", token, {
+      httpOnly: true,
+      secure: false,
+      sameSite: "lax",
+    });
+
+    return res.status(200).json({ message: "Password changed successfully" });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ message: "Internal server error" });
+  }
 };
 
 export const onboarding = async (req, res) => {
@@ -178,9 +199,32 @@ export const profilemanagement = async (req, res) => {
     return res.status(400).json({ message: "No fields provided for update." });
   }
 
-  await updateprofile(userId, updates);
+  try {
+    await updateprofile(userId, updates);
 
-  res.status(200).json({ message: "Profile updated successfully." });
+    // 🔑 Get updated user
+    const updatedUser = await getUserById(userId);
+
+    // 🔑 Sign new JWT with updated user data
+    const token = jwt.sign({ user: updatedUser }, "secret-key", {
+      expiresIn: "1h",
+    });
+
+    // 🔑 Send new cookie
+    res.cookie("token", token, {
+      httpOnly: true,
+      secure: false, // change to true in production with HTTPS
+      sameSite: "lax",
+    });
+
+    res.status(200).json({
+      message: "Profile updated successfully.",
+      user: updatedUser,
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Failed to update profile" });
+  }
 };
 
 export const logout = async (req, res) => {
