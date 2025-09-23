@@ -1,4 +1,5 @@
 import dbConn from "../config/db.js";
+import bcrypt from "bcryptjs";
 import { generateUUID } from "../helpers/generateUUID.js";
 
 export const createUsersTable = async () => {
@@ -50,6 +51,13 @@ export const ifEmailExists = async (email) => {
   return user[0];
 };
 
-export const updatePassword = async (old_password, new_password, user_id) => {
+export const updatePassword = async (new_password, user_id) => {
+  const hashedpassword = await bcrypt.hash(new_password, 10);
 
-}
+  const user = await dbConn.query(
+    "UPDATE users SET password = ? WHERE id = ?",
+    [hashedpassword, user_id]
+  );
+
+  return user;
+};

@@ -1,3 +1,4 @@
+import dbConn from "../config/db.js";
 import { generateToken } from "../helpers/generatetoken.js";
 import {
   createUser,
@@ -80,7 +81,7 @@ export const register = async (req, res) => {
 };
 
 export const changepassword = async (req, res) => {
-  const { old_password, new_password, user_id } = req.body;
+  const { old_password, new_password } = req.body;
   let errors = [];
 
   if (!old_password)
@@ -90,7 +91,28 @@ export const changepassword = async (req, res) => {
 
   if (errors.length > 0) return res.status(400).json(errors);
 
-  const update = await updatePassword(old_password, new_password, user_id);
+  const [user] = await dbConn.query("SELECT * FROM users WHERE id = ?", [
+    req.user.id,
+  ]);
+
+  const isPasswordMatch = await bcrypt.compare(old_password, user.password);
+
+  if (!isPasswordMatch)
+    return res
+      .status(400)
+      .json({ path: "old_password", message: "Password do not match" });
+
+  console.log(isPasswordMatch);
+
+  const update = await updatePassword(new_password, req.user.id);
+
+  console.log(`inside chng`, update);
+
+  if (update.affectedRows !== 1)
+    return res.status(400).json({ message: "Failed to changepass" });
+
+
+  return res.status(200).json({message: "Changepassword success"})
 };
 
 export const logout = async (req, res) => {
