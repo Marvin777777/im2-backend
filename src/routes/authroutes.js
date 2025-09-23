@@ -3,6 +3,7 @@ import {
   changepassword,
   login,
   logout,
+  profilemanagement,
   register,
 } from "../controllers/authcontroller.js";
 import { verifyTheUser } from "../middleware/verifyuser.js";
@@ -13,6 +14,7 @@ router.post("/api/auth/register", register);
 router.post("/api/auth/login", login);
 router.post("/api/auth/logout", verifyTheUser, logout);
 
-router.put("/api/auth/change-password", verifyTheUser, changepassword);
+router.put("/api/auth/change_password", verifyTheUser, changepassword);
+router.put("/api/auth/profile_management", verifyTheUser, profilemanagement);
 
 export default router;

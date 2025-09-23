@@ -7,6 +7,7 @@ export const createUsersTable = async () => {
     const sql = `
         CREATE TABLE IF NOT EXISTS users(
             id VARCHAR(50) NOT NULL,
+            username VARCHAR(100) NOT NULL,
             firstname VARCHAR(100) NOT NULL,
             middlename VARCHAR(100) NOT NULL,
             lastname VARCHAR(100) NOT NULL,
@@ -60,4 +61,27 @@ export const updatePassword = async (new_password, user_id) => {
   );
 
   return user;
+};
+
+export const updateprofile = async (user_id, updates) => {
+  const fields = [];
+  const values = [];
+
+  for (const [key, value] of Object.entries(updates)) {
+    if (value !== undefined && value !== null) {
+      fields.push(`${key} = ?`);
+      values.push(value);
+    }
+  }
+
+  if (fields.length === 0) {
+    throw new Error("No fields to update.");
+  }
+
+  values.push(user_id);
+
+  const sql = `UPDATE users SET ${fields.join(", ")} WHERE id = ?`;
+  const result = await dbConn.query(sql, values);
+
+  return result;
 };

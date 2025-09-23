@@ -4,6 +4,7 @@ import {
   createUser,
   ifEmailExists,
   updatePassword,
+  updateprofile,
 } from "../models/usermodel.js";
 import bcrypt from "bcryptjs";
 
@@ -111,8 +112,27 @@ export const changepassword = async (req, res) => {
   if (update.affectedRows !== 1)
     return res.status(400).json({ message: "Failed to changepass" });
 
+  return res.status(200).json({ message: "Changepassword success" });
+};
 
-  return res.status(200).json({message: "Changepassword success"})
+export const profilemanagement = async (req, res) => {
+  const userId = req.user.id;
+  const { firstname, middlename, lastname, email } = req.body;
+
+  const updates = {
+    ...(firstname && { firstname }),
+    ...(middlename && { middlename }),
+    ...(lastname && { lastname }),
+    ...(email && { email }),
+  };
+
+  if (Object.keys(updates).length === 0) {
+    return res.status(400).json({ message: "No fields provided for update." });
+  }
+
+  await updateprofile(userId, updates);
+
+  res.status(200).json({ message: "Profile updated successfully." });
 };
 
 export const logout = async (req, res) => {
