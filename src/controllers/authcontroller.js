@@ -95,10 +95,12 @@ export const changepassword = async (req, res) => {
   if (errors.length > 0) return res.status(400).json(errors);
 
   try {
-    const [rows] = await dbConn.query("SELECT * FROM users WHERE id = ?", [
+    const [user] = await dbConn.query("SELECT * FROM users WHERE id = ?", [
       req.user.id,
     ]);
-    const user = rows[0]; // ✅ fix: query returns array
+    // const user = rows[0]; // ✅ fix: query returns array
+
+    console.log(user);
 
     const isPasswordMatch = await bcrypt.compare(old_password, user.password);
 
