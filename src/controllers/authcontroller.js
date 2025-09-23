@@ -1,5 +1,9 @@
 import { generateToken } from "../helpers/generatetoken.js";
-import { createUser, ifEmailExists, updatePassword } from "../models/usermodel.js";
+import {
+  createUser,
+  ifEmailExists,
+  updatePassword,
+} from "../models/usermodel.js";
 import bcrypt from "bcryptjs";
 
 export const login = async (req, res) => {
@@ -33,7 +37,7 @@ export const login = async (req, res) => {
     sameSite: "lax",
   });
 
-  return res.status(200).json({ user: isUserExist });
+  return res.status(200).json({ message: "Login success", user: isUserExist });
 };
 
 export const register = async (req, res) => {
@@ -86,10 +90,7 @@ export const changepassword = async (req, res) => {
 
   if (errors.length > 0) return res.status(400).json(errors);
 
-
   const update = await updatePassword(old_password, new_password, user_id);
-
-
 };
 
 export const logout = async (req, res) => {
