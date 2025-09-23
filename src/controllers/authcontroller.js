@@ -2,11 +2,13 @@ import dbConn from "../config/db.js";
 import { generateToken } from "../helpers/generatetoken.js";
 import {
   createUser,
+  getUserById,
   ifEmailExists,
   updatePassword,
   updateprofile,
 } from "../models/usermodel.js";
 import bcrypt from "bcryptjs";
+import jwt from "jsonwebtoken";
 
 export const login = async (req, res) => {
   const { email, password } = req.body;
@@ -46,13 +48,13 @@ export const register = async (req, res) => {
   const { firstname, middlename, lastname, email, password } = req.body;
   let errors = [];
 
-  if (!firstname)
-    errors.push({ field: "firstname", message: "First name is required" });
-  if (!lastname)
-    errors.push({ field: "lastname", message: "Last name is required" });
+  // if (!firstname)
+  //   errors.push({ field: "firstname", message: "First name is required" });
+  // if (!lastname)
+  //   errors.push({ field: "lastname", message: "Last name is required" });
 
-  if (!middlename)
-    errors.push({ field: "middlename", message: "Middle name is required" });
+  // if (!middlename)
+  //   errors.push({ field: "middlename", message: "Middle name is required" });
 
   if (!email) errors.push({ field: "email", message: "Email is required" });
   if (!password)
@@ -71,7 +73,7 @@ export const register = async (req, res) => {
   const hashedPassword = await bcrypt.hash(password, salt);
 
   try {
-    await createUser(firstname, middlename, lastname, email, hashedPassword);
+    await createUser(email, hashedPassword);
   } catch (error) {
     console.log(error);
   }
@@ -113,6 +115,52 @@ export const changepassword = async (req, res) => {
     return res.status(400).json({ message: "Failed to changepass" });
 
   return res.status(200).json({ message: "Changepassword success" });
+};
+
+export const onboarding = async (req, res) => {
+  const userId = req.user.id; // comes from verifyTheUser middleware
+  const { firstname, middlename, lastname, username } = req.body;
+
+  let errors = [];
+  if (!firstname)
+    errors.push({ field: "firstname", message: "First name is required" });
+  if (!lastname)
+    errors.push({ field: "lastname", message: "Last name is required" });
+  if (!username)
+    errors.push({ field: "username", message: "Username is required" });
+
+  if (errors.length > 0) return res.status(400).json(errors);
+
+  try {
+    const updates = {
+      firstname,
+      middlename,
+      lastname,
+      username,
+      onboarding: 0,
+    };
+
+    await updateprofile(userId, updates);
+
+    const updatedUser = await getUserById(userId);
+
+    const token = jwt.sign({ user: updatedUser }, "secret-key", {
+      expiresIn: "1h",
+    });
+
+    res.cookie("token", token, {
+      httpOnly: true,
+      secure: false,
+      sameSite: "lax",
+    });
+
+    return res
+      .status(200)
+      .json({ message: "Onboarding completed successfully." });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ message: "Failed to complete onboarding" });
+  }
 };
 
 export const profilemanagement = async (req, res) => {
